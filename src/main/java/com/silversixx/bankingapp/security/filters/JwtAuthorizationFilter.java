@@ -5,7 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.silversixx.bankingapp.security.jwt.JwtProperties;
+import com.silversixx.bankingapp.utils.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,7 +32,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtProperties properties;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getServletPath().equals("/api/v1/user/enable")){
+        log.info(request.getServletPath());
+        if(request.getServletPath().equals("/api/v1/user/enable") || request.getServletPath().equals("/api/v1/user/refresh")){
             // allow the request to these endpoint go without authorization
             filterChain.doFilter(request, response);
         } else {
@@ -44,8 +45,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     JWTVerifier verifier = JWT.require(algorithm).build();
                     DecodedJWT decodedJWT = verifier.verify(token);
                     String userName = decodedJWT.getSubject();
-                    String password = decodedJWT.getClaim("p").asString();
-                    String[] roles = decodedJWT.getClaim("r").asArray(String.class);
+                    String password = decodedJWT.getClaim("password").asString();
+                    String[] roles = decodedJWT.getClaim("authorities").asArray(String.class);
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
                     stream(roles).forEach(role ->{
                         authorities.add(new SimpleGrantedAuthority(role));
@@ -54,7 +55,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     filterChain.doFilter(request, response);
                 } catch(Exception e){
-                    log.error("Error logging in: {}", e.getMessage());
+                    log.error("Error authorization: {}", e.getMessage());
                     response.setHeader("error", e.getMessage());
                     response.setStatus(FORBIDDEN.value());
                     Map<String, String> error= new HashMap<>();

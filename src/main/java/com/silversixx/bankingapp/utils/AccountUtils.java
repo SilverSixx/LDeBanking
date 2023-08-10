@@ -11,8 +11,10 @@ public class AccountUtils {
      */
     public static final String ACCOUNT_EXISTS_EMAIL_CODE = "001";
     public static final String ACCOUNT_EXISTS_EMAIL_MESSAGE = "This email already belongs to an account.";
-    public static final String ACCOUNT_EXISTS_PHONE_NUMBER_CODE = "111";
-    public static final String ACCOUNT_EXISTS_PHONE_NUMBER_MESSAGE = "This phone number already belongs to an account.";
+    public static final String ACCOUNT_EXISTS_CODE = "000";
+    public static final String ACCOUNT_EXISTS_MESSAGE = "Account already exists, please register again.";
+    public static final String ACCOUNT_REGISTERED_NOT_ENABLED_CODE = "111";
+    public static final String ACCOUNT_REGISTERED_NOT_ENABLED_MESSAGE = "Please enable your account";
     public static final String ACCOUNT_NOT_EXISTS_CODE = "011";
     public static final String ACCOUNT_NOT_EXISTS_MESSAGE = "This account does not exits.";
     public static final String EMAIL_INVALID_CODE = "010";

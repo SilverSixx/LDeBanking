@@ -1,4 +1,4 @@
-package com.silversixx.bankingapp.security.principal;
+package com.silversixx.bankingapp.entity.principal;
 
 import com.silversixx.bankingapp.dao.UserRepository;
 import com.silversixx.bankingapp.entity.UserModel;

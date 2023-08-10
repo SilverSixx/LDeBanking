@@ -37,24 +37,28 @@ public class BankServiceImpl implements BankService {
     }
     @Override
     public Mono<Object> creditRequestForOtp(String accountNumber) {
-        return Mono.fromCallable(() -> {
-            Optional<UserModel> userOpt = userRepo.findByAccountNumber(accountNumber);
-            if (userOpt.isPresent())
-                return otpService.sendOTP(accountNumber);
-            else return new OtpResponse(OtpStatus.DELIVERED, "Otp sent successfully");
-        }).switchIfEmpty(Mono.defer(() -> Mono.just(new OtpResponse(OtpStatus.FAILED, "User not found"))));
+        return Mono.fromCallable(
+        () -> {
+                Optional<UserModel> userOpt = userRepo.findByAccountNumber(accountNumber);
+                if (userOpt.isPresent())
+                    return otpService.sendOTP(accountNumber);
+                else return new OtpResponse(OtpStatus.DELIVERED, "Otp sent successfully");
+            }
+        ).switchIfEmpty(Mono.defer(() -> Mono.just(new OtpResponse(OtpStatus.FAILED, "User not found"))));
     }
     @Override
     public Mono<Object> debitRequestForOtp(String accountNumber, BigDecimal amount) {
-        return Mono.fromCallable(() -> {
-            Optional<UserModel> userOpt = userRepo.findByAccountNumber(accountNumber);
-            if (userOpt.isPresent()) {
-                UserModel user = userOpt.get();
-                if (user.getAccountBalance().compareTo(amount) < 0)
-                    return new OtpResponse(OtpStatus.FAILED, "Insufficient balance");
-                else return otpService.sendOTP(accountNumber);
-            } else return new OtpResponse(OtpStatus.DELIVERED, "Otp sent successfully");
-        }).switchIfEmpty(Mono.defer(() -> Mono.just(new OtpResponse(OtpStatus.FAILED, "User not found"))));
+        return Mono.fromCallable(
+        () -> {
+                Optional<UserModel> userOpt = userRepo.findByAccountNumber(accountNumber);
+                if (userOpt.isPresent()) {
+                    UserModel user = userOpt.get();
+                    if (user.getAccountBalance().compareTo(amount) < 0)
+                        return new OtpResponse(OtpStatus.FAILED, "Insufficient balance");
+                    else return otpService.sendOTP(accountNumber);
+                } else return new OtpResponse(OtpStatus.DELIVERED, "Otp sent successfully");
+            }
+        ).switchIfEmpty(Mono.defer(() -> Mono.just(new OtpResponse(OtpStatus.FAILED, "User not found"))));
     }
     @Override
     public Mono<Object> transferRequestForOtp(String accountTransfer, String accountBenefit, BigDecimal amount) {
@@ -194,6 +198,15 @@ public class BankServiceImpl implements BankService {
                                 request.getMessage()
                         )
                 )
+        );
+        transactionService.saveTransaction(
+                TransactionDto.builder()
+                        .transactionType("TRANSFER")
+                        .transactionTimestamp(LocalDateTime.now())
+                        .accountNumber(request.getAccountTransfer())
+                        .amount(request.getAmount())
+                        .status("SUCCESS")
+                        .build()
         );
         return bankResponseUtils.actionResponse(
                 AccountUtils.SUCCESSFUL_TRANSACTION_CODE,

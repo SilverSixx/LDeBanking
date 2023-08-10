@@ -2,8 +2,8 @@ package com.silversixx.bankingapp.security.config;
 
 import com.silversixx.bankingapp.security.filters.JwtAuthorizationFilter;
 import com.silversixx.bankingapp.security.filters.LoginProcessingFilter;
-import com.silversixx.bankingapp.security.jwt.JwtProperties;
-import com.silversixx.bankingapp.security.principal.UserDetailsServiceImpl;
+import com.silversixx.bankingapp.utils.JwtProperties;
+import com.silversixx.bankingapp.entity.principal.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -37,15 +36,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(STATELESS)
             .and()
                 .authorizeRequests()
-                    .antMatchers("/api/v*/user/new").permitAll()
-                    .antMatchers("/api/v*/service").hasRole(USER.name())
+                    .antMatchers("/api/v*/user/new","/api/v*/user/enable","/api/v*/user/refresh").permitAll()
+                    .antMatchers("/api/v*/service/**").hasRole(USER.name())
                     .anyRequest().authenticated()
             .and()
                 .addFilter(new LoginProcessingFilter(authenticationManagerBean(), properties))
                 .addFilterBefore(new JwtAuthorizationFilter(properties), UsernamePasswordAuthenticationFilter.class)
                 .formLogin()
-                .loginPage("/login").permitAll() // endpoint that show login page
-                .defaultSuccessUrl("/service", true)
             .and()
                 .rememberMe()// enable rememberMe cookie
                 .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(30))
@@ -67,4 +64,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+//    @Bean
+//    public void adminCredentialsBean() {
+//        UserModel admin = UserModel.builder()
+//                .email("admin")
+//                .password(passwordEncoder.encode("admin"))
+//                .fullName("admin")
+//                .dob(null)
+//                .gender(null)
+//                .address(null)
+//                .phoneNumber(null)
+//                .accountNumber(null)
+//                .accountBalance(null)
+//                .enabled(true)
+//                .accountNonExpired(true)
+//                .accountNonLocked(true)
+//                .credentialsNonExpired(true)
+//                .roles(Set.of(ADMIN, USER))
+//                .build();
+//        userRepo.save(admin);
+//    }
 }

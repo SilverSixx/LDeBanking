@@ -1,4 +1,4 @@
-package com.silversixx.bankingapp.security.jwt;
+package com.silversixx.bankingapp.utils;
 
 import lombok.Getter;
 import lombok.Setter;

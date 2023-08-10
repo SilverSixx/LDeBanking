@@ -1,4 +1,4 @@
-package com.silversixx.bankingapp.security.principal;
+package com.silversixx.bankingapp.entity.principal;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;

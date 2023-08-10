@@ -1,48 +1,20 @@
-package com.silversixx.bankingapp.security.jwt;
+package com.silversixx.bankingapp.utils;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.silversixx.bankingapp.security.principal.UserDetailsServiceImpl;
-import com.silversixx.bankingapp.security.principal.UserPrincipal;
+import com.silversixx.bankingapp.utils.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import javax.servlet.http.HttpServletRequest;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-@Component
 @RequiredArgsConstructor
 public class JwtUtils {
     private final JwtProperties properties;
-    private final UserDetailsServiceImpl userService;
-    public UserPrincipal convert(DecodedJWT jwt){
-        return (UserPrincipal) userService.loadUserByUsername(jwt.getSubject());
-    }
-    public DecodedJWT decode(String token){
-        return JWT
-                .require(Algorithm.HMAC256(properties.getSecretKey()))
-                .build()
-                .verify(token);
-    }
-    public Optional<String> extractTokenFromRequest(HttpServletRequest request){
-        var token = request.getHeader("Authorization");
-        if(StringUtils.hasText(token) && token.startsWith("Bearer ")){
-            return Optional.of(token.substring(7));
-        }
-        return Optional.empty();
-    }
-
-
     public Date extractExpirations(String token){
         return extractClaim(token, Claims::getExpiration);
     }
@@ -60,7 +32,6 @@ public class JwtUtils {
     public Claims extractAllClaims (String token){
         return Jwts.parser().setSigningKey(properties.getSecretKey()).parseClaimsJwt(token).getBody();
     }
-
     public Boolean isTokenExpired(String token){
         return extractExpirations(token).before(new Date());
     }
@@ -71,7 +42,6 @@ public class JwtUtils {
     public String generateToken(UserDetails userDetails, Map<String, Object> claims){
         return createToken(claims, userDetails);
     }
-
     private String createToken(Map<String, Object> claims, UserDetails userDetails){
         return Jwts.builder().setClaims(claims)
                 .setSubject(userDetails.getUsername())
