@@ -4,6 +4,7 @@ import com.silversixx.bankingapp.entity.UserModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,5 +21,10 @@ public interface UserRepository extends JpaRepository<UserModel, Long> {
     @Query("UPDATE UserModel u " +
             "SET u.enabled = TRUE WHERE u.email = ?1")
     void enableUser(String email);
+    @Transactional
+    @Modifying
+    @Query("UPDATE UserModel u " +
+            "SET u.password = :newPassword WHERE u.email = :email")
+    void changePassword(@Param("email") String email, @Param("newPassword") String newPassword);
 }
 

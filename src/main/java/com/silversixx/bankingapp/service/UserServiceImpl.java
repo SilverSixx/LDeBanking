@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.silversixx.bankingapp.dao.UserRepository;
 import com.silversixx.bankingapp.dto.BankResponse;
+import com.silversixx.bankingapp.dto.ChangePasswordRequest;
 import com.silversixx.bankingapp.dto.EmailDetails;
 import com.silversixx.bankingapp.dto.RegisterRequest;
 import com.silversixx.bankingapp.entity.ConfirmToken;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +36,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.silversixx.bankingapp.security.authorities.Permission.*;
 import static com.silversixx.bankingapp.security.authorities.Role.*;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -92,7 +95,7 @@ public class UserServiceImpl implements UserService {
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)
-                .roles(Set.of(USER))
+                .roles(new HashSet<>(Collections.singletonList(USER)))
                 .build();
         userRepo.save(userFromRequest);
         String token = UUID.randomUUID().toString();
@@ -124,11 +127,9 @@ public class UserServiceImpl implements UserService {
         );
     }
     @Override
-    public void enableAccount(String email) {
-        userRepo.enableUser(email);
-    }
+    public void enableAccount(String email) {userRepo.enableUser(email);}
     @Override
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String authHeader = request.getHeader(AUTHORIZATION);
         if(authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring("Bearer ".length());
@@ -150,14 +151,32 @@ public class UserServiceImpl implements UserService {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             JSONObject jsonResponse = new JSONObject();
             jsonResponse.put("New-Access-Token", newAccessToken);
-            try {
-                response.getWriter().write(jsonResponse.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            response.getWriter().write(jsonResponse.toString());
         } else {
+            response.getWriter().write("Bearer token required.");
             throw new IllegalStateException("Invalid auth header.");
         }
+    }
+    @Override
+    public void changePassword(HttpServletRequest request, HttpServletResponse response, ChangePasswordRequest changePasswordRequest) throws IOException {
+        String authHeader = request.getHeader(AUTHORIZATION);
+        if(authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring("Bearer ".length());
+            Algorithm algorithm = Algorithm.HMAC256(properties.getSecretKey().getBytes());
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            DecodedJWT decodedJWT = verifier.verify(token);
+            UserModel user = userRepo.findUserByEmail(decodedJWT.getSubject()).orElseThrow(() -> new UsernameNotFoundException("User not found by decoded subject."));
+            if (!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword())){
+                response.getWriter().write("Incorrect old password.");
+                return;
+            }
+            userRepo.changePassword(user.getEmail(), passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+            response.getWriter().write("Password changed successfully.");
+        } else {
+            response.getWriter().write("Bearer token required.");
+            throw new IllegalStateException("Invalid auth header.");
+        }
+
     }
 
 }

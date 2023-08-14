@@ -78,10 +78,10 @@ public class BankServiceImpl implements BankService {
     @Override
     public BankResponse creditRequestWithOtp(CreditDebitRequest request) {
         Optional<UserModel> userOpt = userRepo.findByAccountNumber(request.getAccountNumber());
-        if(userOpt.isEmpty())
+        if (!userOpt.isPresent()) // Use isPresent() instead of isEmpty()
             return bankResponseUtils.exceptionResponse(AccountUtils.ACCOUNT_NOT_EXISTS_CODE, AccountUtils.ACCOUNT_NOT_EXISTS_MESSAGE);
         UserModel user = userOpt.get();
-        if(!otpUtils.verifyOTP(request.getOtp(), user.getAccountNumber()))
+        if (!otpUtils.verifyOTP(request.getOtp(), user.getAccountNumber()))
             return bankResponseUtils.exceptionResponse(AccountUtils.INVALID_OTP_CODE, AccountUtils.INVALID_OTP_MESSAGE);
         user.setAccountBalance(user.getAccountBalance().add(request.getAmount()));
         userRepo.save(user);
@@ -89,8 +89,8 @@ public class BankServiceImpl implements BankService {
                 EmailDetails.builder()
                         .recipientMail(user.getEmail())
                         .subject("ACCOUNT CREDIT")
-                        .build()
-                , EmailUtils.buildCreditDebitEmail(
+                        .build(),
+                EmailUtils.buildCreditDebitEmail(
                         user.getEmail(),
                         EmailUtils.buildCreditDebitDetails(
                                 LocalDateTime.now(),
@@ -112,10 +112,11 @@ public class BankServiceImpl implements BankService {
         );
         return bankResponseUtils.actionResponse(AccountUtils.ACCOUNT_CREDIT_CODE, AccountUtils.ACCOUNT_CREDIT_MESSAGE, user.getFullName(), user.getAccountNumber(), user.getAccountBalance());
     }
+
     @Override
     public BankResponse debitRequestWithOtp(CreditDebitRequest request) {
         Optional<UserModel> userOpt = userRepo.findByAccountNumber(request.getAccountNumber());
-        if(userOpt.isEmpty())
+        if (!userOpt.isPresent())
             return bankResponseUtils.exceptionResponse(AccountUtils.ACCOUNT_NOT_EXISTS_CODE, AccountUtils.ACCOUNT_NOT_EXISTS_MESSAGE);
         UserModel user = userOpt.get();
         if(!otpUtils.verifyOTP(request.getOtp(), user.getAccountNumber()))
@@ -149,10 +150,10 @@ public class BankServiceImpl implements BankService {
     public BankResponse transferRequestWithOtp(TransferRequest request) {
         Optional<UserModel> userSource = userRepo.findByAccountNumber(request.getAccountTransfer());
         Optional<UserModel> userDestination = userRepo.findByAccountNumber(request.getAccountBenefit());
-        if(userSource.isEmpty())
+        if (!userSource.isPresent())
             return bankResponseUtils.exceptionResponse(AccountUtils.ACCOUNT_NOT_EXISTS_CODE, AccountUtils.ACCOUNT_NOT_EXISTS_MESSAGE);
         UserModel userTransfer = userSource.get();
-        if(userDestination.isEmpty())
+        if (!userDestination.isPresent())
             return bankResponseUtils.exceptionResponse(AccountUtils.ACCOUNT_NOT_EXISTS_CODE, AccountUtils.ACCOUNT_NOT_EXISTS_MESSAGE);
         UserModel userBenefit = userDestination.get();
         if(!otpUtils.verifyOTP(request.getOtp(), userTransfer.getAccountNumber()))

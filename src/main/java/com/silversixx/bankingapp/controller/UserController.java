@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -29,8 +30,12 @@ public class UserController {
         return userService.confirm(token);
     }
     @PostMapping("/refresh")
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response){
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         userService.refreshToken(request, response);
+    }
+    @PostMapping("/password/change")
+    public void changePassword(HttpServletRequest request, HttpServletResponse response, @RequestBody ChangePasswordRequest changePasswordRequest) throws IOException {
+        userService.changePassword(request, response, changePasswordRequest);
     }
 
 }
